@@ -3,11 +3,19 @@
 # import module 
 from tkinter import *
 from tkinter import filedialog
+import socket
+import os
 
  #files database
 with open("files.txt", "r") as file:
     content = file.read().splitlines()
 
+# server information
+IP = "localhost"
+PORT = 4450
+SIZE = 1024
+FORMAT = "utf-8"
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # create root window 
 root = Tk()
@@ -18,32 +26,63 @@ root.geometry('600x500')
 
 # commmand when user wants to upload a file 
 def upload_file():
-
     #allows user to upload text, audio, and video files 
     filename = filedialog.askopenfilename(title= "Select a file", filetypes=[("Text files", ".txt"),
                                                                              ("Audio files", ".mp3"), 
                                                                              ("Video files", ".mp4")])
+    # opens file for reading
+    f = open(filename, 'rb')
     print('Selected:', filename)
 
-    #checks if file already exists in server or not 
-    if filename not in content:
-        #open file to edit it 
-        with open("files.txt", "a") as file:
-            #add file name to the files database 
-            file.write(filename + "\n")
+    # sends upload command with file name and size
+    s.send(f"UPLOAD@{os.path.basename(filename)}@{os.path.getsize(filename)}".encode(FORMAT))
+
+    # sends data to server
+    sendData = f.read(1024)
+    while (sendData):
+        s.send(sendData)
+        sendData = f.read(1024)
+    f.close()
+
+    # receives status from server
+    data = s.recv(SIZE).decode(FORMAT)
+    status, msg = data.split("@")
+    print(status,": ",msg)
+
+
+# command when user wants to download a file
+def download_file():
+    filename = "text2.txt" # placeholder for filename input
+    s.send(f"DOWNLOAD@{filename}".encode(FORMAT))
+    data = s.recv(SIZE).decode(FORMAT)
+    status, msg = data.split("@")
+
+    if status == "OK":
+        filesize = int(msg)
+
+        f = open(filename, 'wb')
+        bytes_received = 0
+        while bytes_received < filesize:
+            bytes_read = s.recv(SIZE)
+            f.write(bytes_read)
+            bytes_received += len(bytes_read)
+
+        print(f"Download of {filename} complete.")
 
     else:
-        print('File already exists in Server')
-
+        print(status,": ", msg)
 
 
 # from main window to upload window where user would actually upload files after connecting to server 
 def connect_server():
     # would connect to server 
+    s.connect((IP, PORT))
+    data = s.recv(SIZE).decode(FORMAT)
+    status, msg = data.split("@")
+    
+    connect.configure(text = msg) #stand in text for the actual action
 
-    connect.configure(text = "Welcome to File Sharing Cloud Service") #stand in text for the actual action
-
-    #menu of options
+    # menu of options
     listbox = Listbox(root, height = 10, 
                     width = 15, 
                     bg = "grey",
@@ -56,7 +95,7 @@ def connect_server():
     upload.pack()
 
     # download files button
-    download = Button(root, text = "Download Files", fg = "blue", command = NONE)
+    download = Button(root, text = "Download Files", fg = "blue", command = download_file)
     download.pack()
 
     # view list of files button
@@ -77,8 +116,6 @@ connect.pack()
 
 # delete files
 
-
-# subfolders 
 
 # execution
 root.mainloop()
