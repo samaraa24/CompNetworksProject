@@ -3,6 +3,8 @@
 # import module 
 from tkinter import *
 from tkinter import filedialog
+from tkinter import simpledialog
+from tkinter import messagebox
 import socket
 import os
 
@@ -95,7 +97,7 @@ def view_all_files():
 
     #adding a scrollbar 
     scrollbar = Scrollbar(file_window)
-    scrollbar.pack(side = RIGHT, fill = YES)
+    scrollbar.pack(side = RIGHT, fill = BOTH)
     file_listbox.config(yscrollcommand=scrollbar.set)
     scrollbar.config(command=file_listbox.yview)
 
@@ -116,14 +118,38 @@ def view_all_files():
 
 
 
+def delete_files():
+    file_window
+
+    filename = simpledialog.askstring("Delete Files", "Enter File Name")
+   
+    if filename:
+        #sending delete command to server
+        s.send(f"DELETE@{filename}".encode(FORMAT))
+
+        #receive server's response 
+        response = s.resv(SIZE).decode(FORMAT)
+        status, message = response.split("@", 1)
+
+        #server response 
+        if status == "OK":
+            messagebox.showinfo("{filename} was successfully deleted", message)
+        else:
+            messagebox.showerror("Error", message)
+    else: 
+        print("File does not exist")
+            
+
 # from main window to upload window where user would actually upload files after connecting to server 
 def connect_server():
-    # would connect to server 
+    # connecting to server 
     s.connect((IP, PORT))
     data = s.recv(SIZE).decode(FORMAT)
     status, msg = data.split("@")
     
+
     connect.configure(text = msg) #stand in text for the actual action
+    connect.place(x = 180, y = 0)
 
     # menu of options
     listbox = Listbox(root, height = 10, 
@@ -134,34 +160,36 @@ def connect_server():
                     fg = "yellow")
 
     # upload files button
-    upload = Button(root, text = "Upload File", fg = "blue", command = upload_file)
+    upload = Button(root, text = "Upload File", fg = "black", command = upload_file)
     upload.pack()
+    upload.place(x = 240, y = 30)
 
     # download files button
-    download = Button(root, text = "Download Files", fg = "blue", command = download_file)
+    download = Button(root, text = "Download Files", fg = "black", command = download_file)
     download.pack()
+    download.place(x = 228, y = 60)
 
     # view list of files button
-    view_files = Button(root, text = "View All Files", fg = "blue", command = view_all_files)
+    view_files = Button(root, text = "View All Files", fg = "black", command = view_all_files)
     view_files.pack()
-        
+    view_files.place(x = 235, y = 90)
+
+    delete = Button(root, text = "Delete Files", fg = "black", command = delete_files)
+    delete.pack()
+    delete.place(x = 240, y = 120)
         
     listbox.insert(1, upload)
     listbox.insert(2, download)
     listbox.insert(3, view_files)
-
+    listbox.insert(4, delete)
 
 
 # connect server IP port -> initiate connection from client to server with specified files 
-connect = Button(root, text = "Connect to Server", fg = "blue", command = connect_server)
-connect.pack()
-
-
-# delete files
+connect = Button(root, text = "Connect to Server", fg = "black", bg = "blue", command = connect_server)
+connect.pack(pady = 30)
+connect.place(x = 220, y = 180)
 
 
 # execution
 root.mainloop()
 file_window.mainloop()
-
-
