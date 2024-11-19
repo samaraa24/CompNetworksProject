@@ -7,7 +7,7 @@ import socket
 import os
 
  #files database
-with open("files.txt", "r") as file:
+with open("server_files/files.txt", "r") as file:
     content = file.read().splitlines()
 
 # server information
@@ -163,5 +163,3 @@ connect.pack()
 # execution
 root.mainloop()
 file_window.mainloop()
-
-

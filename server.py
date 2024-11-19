@@ -75,6 +75,18 @@ def handle_client(conn, addr):
 def main():
     if not os.path.exists(SERVER_PATH):
         os.makedirs(SERVER_PATH)
+    
+    # create text2 file in server files
+    filename = "text2.txt"
+    with open(os.path.join(SERVER_PATH, filename), "w") as file:
+        file.write("This is a test file for the server.")
+        file.close()
+    #create files file in server files
+    filename = "files.txt"
+    with open(os.path.join(SERVER_PATH, filename), "w") as file:
+        file.write("This is files.txt for the server.")
+        file.close()
+
 
     print("Starting the server")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
