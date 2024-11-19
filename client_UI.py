@@ -17,8 +17,9 @@ SIZE = 1024
 FORMAT = "utf-8"
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# create root window 
+# create windows
 root = Tk()
+file_window = Toplevel(root)
 
 # main window title and dimension 
 root.title("File Sharing Cloud Service")
@@ -73,6 +74,48 @@ def download_file():
         print(status,": ", msg)
 
 
+def view_all_files():
+
+    #sending command to server 
+    s.send("DIR@".encode(FORMAT))
+
+    #receiving response 
+    response = s.recv(SIZE).decode(FORMAT)
+    status, files = response.split("@",1)
+
+    #new window will open with the file database
+    file_window.title("File Database")
+    file_window.geometry('600x500')
+
+    #making listbox inside new window to display the files 
+    file_listbox = Listbox(file_window,height=15, 
+                           width=50, bg="lightgrey", 
+                           font=("Helvetica", 12), fg="black")
+    file_listbox.pack(pady = 10, padx = 10, fill = BOTH, expand = True)
+
+    #adding a scrollbar 
+    scrollbar = Scrollbar(file_window)
+    scrollbar.pack(side = RIGHT, fill = YES)
+    file_listbox.config(yscrollcommand=scrollbar.set)
+    scrollbar.config(command=file_listbox.yview)
+
+    #when it finds the files, if the server isnt empty, the files will be displayed 
+    if status == "OK":
+
+        if files.strip():
+            file_list = files.strip().split("\n")
+        
+            for file in file_list:
+                file_listbox.insert(END, file)
+
+        else:
+            file_listbox.insert(END, "SERVER IS EMPTY")
+            
+    else:
+        file_listbox.insert(END,f"Error: {files}")
+
+
+
 # from main window to upload window where user would actually upload files after connecting to server 
 def connect_server():
     # would connect to server 
@@ -89,7 +132,7 @@ def connect_server():
                     activestyle = 'dotbox', 
                     font = "Helvetica",
                     fg = "yellow")
-        
+
     # upload files button
     upload = Button(root, text = "Upload File", fg = "blue", command = upload_file)
     upload.pack()
@@ -99,13 +142,13 @@ def connect_server():
     download.pack()
 
     # view list of files button
-    view_files = Button(root, text = "View All Files", fg = "blue", command = NONE)
+    view_files = Button(root, text = "View All Files", fg = "blue", command = view_all_files)
     view_files.pack()
         
         
     listbox.insert(1, upload)
-    listbox.insert(1, download)
-    listbox.insert(1, view_files)
+    listbox.insert(2, download)
+    listbox.insert(3, view_files)
 
 
 
@@ -119,3 +162,6 @@ connect.pack()
 
 # execution
 root.mainloop()
+file_window.mainloop()
+
+
