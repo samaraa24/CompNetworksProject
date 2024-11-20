@@ -152,7 +152,28 @@ def delete_files():
             messagebox.showerror("Error", message)
     else: 
         print("File does not exist")
-            
+
+
+def create_directory():
+    file_window
+
+    filename = simpledialog.askstring("Create Directories", "Enter Directory Name")
+
+    if filename:
+        #send create directory command to server
+        s.send(f"CREATEDIR@{filename}".encode(FORMAT))
+
+        # receive server's response
+        response = s.resv(SIZE).decode(FORMAT)
+        status, message = response.split("@", 1)
+
+        #server response 
+        if status == "OK":
+            messagebox.showinfo(f"{filename} was successfully deleted", message)
+        else:
+            messagebox.showerror("Error", message)
+    else: 
+        print("Directory already exists")
 
 # from main window to upload window where user would actually upload files after connecting to server 
 def connect_server():
@@ -191,11 +212,17 @@ def connect_server():
     delete = Button(root, text = "Delete Files", fg = "blue", bg = "white", command = delete_files)
     delete.pack()
     delete.place(x = 240, y = 120)
+
+    # create directory button
+    createDirectory = Button(root, text = "Create New Directory", fg = "blue", bg = "white", command = create_directory)
+    createDirectory.pack()
+    createDirectory.place(x = 210, y = 150)
         
     listbox.insert(1, upload)
     listbox.insert(2, download)
     listbox.insert(3, view_files)
     listbox.insert(4, delete)
+    listbox.insert(5, createDirectory)
 
 
 # connect server IP port -> initiate connection from client to server with specified files 

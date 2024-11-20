@@ -73,6 +73,15 @@ def handle_client(conn, addr):
                     send_data += "No directories"
                 conn.send(send_data.encode(FORMAT))
 
+            elif cmd == "CREATEDIR":
+                filename = args[0]
+                filepath = os.path.join(SERVER_PATH, filename)
+                if not os.path.exists(filepath):
+                    os.mkdir(filepath)
+                    
+                else:
+                    conn.send(f"ERROR@File {filename} already exists or incorrect format.".encode(FORMAT))
+
         except Exception as e:
             conn.send(f"ERROR@{str(e)}".encode(FORMAT))
             break
