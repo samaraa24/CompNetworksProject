@@ -133,7 +133,7 @@ def delete_files():
 
         #server response 
         if status == "OK":
-            messagebox.showinfo("{filename} was successfully deleted", message)
+            messagebox.showinfo(f"{filename} was successfully deleted", message)
         else:
             messagebox.showerror("Error", message)
     else: 
