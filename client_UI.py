@@ -8,9 +8,6 @@ from tkinter import messagebox
 import socket
 import os
 
- #files database
-with open("files.txt", "r") as file:
-    content = file.read().splitlines()
 
 # server information
 IP = "localhost"
@@ -27,13 +24,31 @@ file_window = Toplevel(root)
 root.title("File Sharing Cloud Service")
 root.geometry('600x500')
 
+# stating the minimum file sizes in bytes 
+MIN_FILE_SIZES = {
+    ".txt" : 25 * 1024 * 1024, # 25 MB
+    ".mp3" : 0.5 * 1024 * 1024 * 1024, #0.5 GB
+    ".mp4" : 2 * 1024 * 1024 * 1024 #2 GB
+}
+
 # commmand when user wants to upload a file 
 def upload_file():
     #allows user to upload text, audio, and video files 
     filename = filedialog.askopenfilename(title= "Select a file", filetypes=[("Text files", ".txt"),
                                                                              ("Audio files", ".mp3"), 
                                                                              ("Video files", ".mp4")])
-    # opens file for reading
+ 
+    #checks for file extension chosen to connect it to it's file size
+    file_extension = os.path.splitext(filename)[1]
+    file_size = os.path.getsize(filename)       
+
+    #sending error message if user selects incorrect file size 
+    if file_size < MIN_FILE_SIZES[file_extension]:
+        messagebox.showerror("Error", "File does not meet size requirement")
+        filename = filedialog.askopenfilename(title= "Select a file", filetypes=[("Text files", ".txt"),
+                                                                             ("Audio files", ".mp3"), 
+                                                                             ("Video files", ".mp4")])
+
     f = open(filename, 'rb')
     print('Selected:', filename)
 
@@ -51,7 +66,6 @@ def upload_file():
     data = s.recv(SIZE).decode(FORMAT)
     status, msg = data.split("@")
     print(status,": ",msg)
-
 
 # command when user wants to download a file
 def download_file():
@@ -160,21 +174,21 @@ def connect_server():
                     fg = "yellow")
 
     # upload files button
-    upload = Button(root, text = "Upload File", fg = "black", command = upload_file)
+    upload = Button(root, text = "Upload File", fg = "blue", bg = "white", command = upload_file)
     upload.pack()
     upload.place(x = 240, y = 30)
 
     # download files button
-    download = Button(root, text = "Download Files", fg = "black", command = download_file)
+    download = Button(root, text = "Download Files", fg = "blue", bg = "white", command = download_file)
     download.pack()
     download.place(x = 228, y = 60)
 
     # view list of files button
-    view_files = Button(root, text = "View All Files", fg = "black", command = view_all_files)
+    view_files = Button(root, text = "View All Files", fg = "blue", bg = "white", command = view_all_files)
     view_files.pack()
     view_files.place(x = 235, y = 90)
 
-    delete = Button(root, text = "Delete Files", fg = "black", command = delete_files)
+    delete = Button(root, text = "Delete Files", fg = "blue", bg = "white", command = delete_files)
     delete.pack()
     delete.place(x = 240, y = 120)
         
@@ -185,7 +199,7 @@ def connect_server():
 
 
 # connect server IP port -> initiate connection from client to server with specified files 
-connect = Button(root, text = "Connect to Server", fg = "black", bg = "blue", command = connect_server)
+connect = Button(root, text = "Connect to Server", fg = "black", bg = "white", command = connect_server)
 connect.pack(pady = 30)
 connect.place(x = 220, y = 180)
 
