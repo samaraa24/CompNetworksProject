@@ -59,9 +59,18 @@ def handle_client(conn, addr):
                 else:
                     conn.send(f"ERROR@File {filename} not found.".encode(FORMAT))
 
+            # checks for directories in server files
             elif cmd == "DIR":
-                files = os.listdir(SERVER_PATH)
-                send_data += ", ".join(files) if files else "No files available."
+                directories = ""
+                for file in os.listdir(SERVER_PATH):
+                    possibleDirectory = os.path.join(SERVER_PATH, file)
+                    if os.path.isdir(possibleDirectory):
+                        directories += file
+                        directories += "\n"
+                if directories != "":
+                    send_data += directories
+                else:
+                    send_data += "No directories"
                 conn.send(send_data.encode(FORMAT))
 
         except Exception as e:
@@ -75,6 +84,18 @@ def handle_client(conn, addr):
 def main():
     if not os.path.exists(SERVER_PATH):
         os.makedirs(SERVER_PATH)
+    
+    # create text2 file in server files
+    filename = "text2.txt"
+    with open(os.path.join(SERVER_PATH, filename), "w") as file:
+        file.write("This is a test file for the server.")
+        file.close()
+    #create files file in server files
+    filename = "files.txt"
+    with open(os.path.join(SERVER_PATH, filename), "w") as file:
+        file.write("This is files.txt for the server.")
+        file.close()
+
 
     print("Starting the server")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
