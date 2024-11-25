@@ -183,7 +183,7 @@ def create_directory():
 
     if filename:
         #send create directory command to server
-        s.send(f"CREATEDIR@{dirname}".encode(FORMAT))
+        s.send(f"CREATEDIR@{current_directory}@{dirname}".encode(FORMAT))
 
         # receive server's response
         response = s.recv(SIZE).decode(FORMAT)

@@ -10,11 +10,12 @@ SIZE = 1024
 FORMAT = "utf-8"
 SERVER_PATH = "server_files"  # Directory for storing server files
 
-
+# handles the client's commands
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@Welcome to the file sharing server".encode(FORMAT))
-
+    global current_directory
+    current_directory = SERVER_PATH
     while True:
         try:
             data = conn.recv(SIZE).decode(FORMAT)
@@ -23,14 +24,15 @@ def handle_client(conn, addr):
 
             if cmd == "LOGOUT":
                 break
-
+            
+            # uploads the file chosen by the user
             elif cmd == "UPLOAD":
                 filename, filesize = args
                 filesize = int(filesize)
-                if os.path.exists(os.path.join(SERVER_PATH, filename)):
+                if os.path.exists(os.path.join(current_directory, filename)):
                     conn.send(f"ERROR@File {filename} already exists.".encode(FORMAT))
                 else:
-                    with open(os.path.join(SERVER_PATH, filename), "wb") as f:
+                    with open(filename, "wb") as f:
                         received = 0
                         while received < filesize:
                             bytes_read = conn.recv(SIZE)
@@ -40,7 +42,7 @@ def handle_client(conn, addr):
 
             elif cmd == "DOWNLOAD":
                 filename = args[0]
-                filepath = os.path.join(SERVER_PATH, filename)
+                filepath = os.path.join(current_directory, filename)
                 if os.path.exists(filepath):
                     filesize = os.path.getsize(filepath)
                     conn.send(f"OK@{filesize}".encode(FORMAT))
@@ -50,9 +52,10 @@ def handle_client(conn, addr):
                 else:
                     conn.send(f"ERROR@File {filename} does not exist.".encode(FORMAT))
 
+            # deletes the file input by the user
             elif cmd == "DELETE":
                 filename = args[0]
-                filepath = os.path.join(SERVER_PATH, filename)
+                filepath = os.path.join(current_directory, filename)
                 if os.path.exists(filepath):
                     os.remove(filepath)
                     conn.send(f"OK@File {filename} deleted.".encode(FORMAT))
@@ -62,8 +65,8 @@ def handle_client(conn, addr):
             # checks for directories in server files
             elif cmd == "DIR":
                 directories = ""
-                for file in os.listdir(SERVER_PATH):
-                    possibleDirectory = os.path.join(SERVER_PATH, file)
+                for file in os.listdir(current_directory):
+                    possibleDirectory = os.path.join(current_directory, file)
                     if os.path.isdir(possibleDirectory):
                         directories += file
                         directories += "\n"
@@ -73,19 +76,22 @@ def handle_client(conn, addr):
                     send_data += "No directories"
                 conn.send(send_data.encode(FORMAT))
 
+            # creates directories/subdirectories
             elif cmd == "CREATEDIR":
-                filename = args[0]
-                filepath = os.path.join(SERVER_PATH, filename)
+                current_directory = args[0]
+                filename = args[1]
+                filepath = os.path.join(current_directory, filename)
+                print(filepath)
                 if not os.path.exists(filepath):
                     os.mkdir(filepath)
-                    
                 else:
                     conn.send(f"ERROR@File {filename} already exists or incorrect format.".encode(FORMAT))
-
+        # throws an exception
         except Exception as e:
             conn.send(f"ERROR@{str(e)}".encode(FORMAT))
             break
 
+    # client has disconnected
     print(f"{addr} disconnected")
     conn.close()
 
