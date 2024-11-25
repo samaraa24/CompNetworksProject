@@ -179,11 +179,11 @@ def delete_files():
 def create_directory():
     file_window = Toplevel(root)
 
-    filename = simpledialog.askstring("Create Directories", "Enter Directory Name")
+    dirname = simpledialog.askstring("Create Directories", "Enter Directory Name")
 
     if filename:
         #send create directory command to server
-        s.send(f"CREATEDIR@{filename}".encode(FORMAT))
+        s.send(f"CREATEDIR@{dirname}".encode(FORMAT))
 
         # receive server's response
         response = s.recv(SIZE).decode(FORMAT)
@@ -191,7 +191,7 @@ def create_directory():
 
         #server response 
         if status == "OK":
-            messagebox.showinfo(f"{filename} was successfully deleted", message)
+            messagebox.showinfo(f"{dirname} was successfully created", message)
         else:
             messagebox.showerror("Error", message)
     else: 
