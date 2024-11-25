@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import time
+import network_analysis
 
 IP = "localhost"
 PORT = 4450
@@ -14,7 +15,6 @@ SERVER_PATH = "server_files"  # Directory for storing server files
 def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@Welcome to the file sharing server".encode(FORMAT))
-    global current_directory
     current_directory = SERVER_PATH
     while True:
         try:
@@ -29,26 +29,33 @@ def handle_client(conn, addr):
             elif cmd == "UPLOAD":
                 filename, filesize = args
                 filesize = int(filesize)
-                if os.path.exists(os.path.join(current_directory, filename)):
+                filepath = os.path.join(current_directory, filename)
+                if os.path.exists(filepath):
                     conn.send(f"ERROR@File {filename} already exists.".encode(FORMAT))
                 else:
-                    with open(filename, "wb") as f:
+                    start_time = int(round(time.time() * 1000000000))
+                    with open(filepath, "wb") as f:
                         received = 0
                         while received < filesize:
                             bytes_read = conn.recv(SIZE)
                             f.write(bytes_read)
                             received += len(bytes_read)
+                    end_time = int(round(time.time() * 1000000000))
+                    network_analysis.update_database("Upload", os.path.basename(filename), filesize, start_time, end_time)
                     conn.send(f"OK@Upload of {filename} complete.".encode(FORMAT))
 
             elif cmd == "DOWNLOAD":
                 filename = args[0]
                 filepath = os.path.join(current_directory, filename)
                 if os.path.exists(filepath):
+                    start_time = int(round(time.time() * 1000000000))
                     filesize = os.path.getsize(filepath)
                     conn.send(f"OK@{filesize}".encode(FORMAT))
                     with open(filepath, "rb") as f:
                         while (bytes_read := f.read(SIZE)):
                             conn.sendall(bytes_read)
+                    end_time = int(round(time.time() * 1000000000))
+                    network_analysis.update_database("Download", os.path.basename(filename), filesize, start_time, end_time)
                 else:
                     conn.send(f"ERROR@File {filename} does not exist.".encode(FORMAT))
 
