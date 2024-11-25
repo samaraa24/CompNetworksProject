@@ -80,17 +80,26 @@ def upload_file():
 
 # command when user wants to download a file
 def download_file():
+    # allows user to type the name of the file they are trying to download
     filename = simpledialog.askstring("Download File","Enter File Name")
+
+    # appends the file path to include the current directory and sends to server
     file_path = os.path.join(current_directory, filename)
     s.send(f"DOWNLOAD@{file_path}".encode(FORMAT))
+
+    # receives message from server
     data = s.recv(SIZE).decode(FORMAT)
     status, msg = data.split("@")
 
     if status == "OK":
+        # server returns the size of the file
         filesize = int(msg)
 
+        # a file is opened for writing in the directory the client program is located
         f = open(filename, 'wb')
         bytes_received = 0
+
+        # receives data from server until the number of received bites reaches the file size
         while bytes_received < filesize:
             bytes_read = s.recv(SIZE)
             f.write(bytes_read)
@@ -98,6 +107,7 @@ def download_file():
 
         print(f"Download of {filename} complete.")
 
+    # prints error message if unsuccessful download
     else:
         print(status,": ",msg)
 
@@ -190,26 +200,32 @@ def create_directory():
 
 def change_dir():
     global current_directory
+
+    # sends command and receives response
     s.send("DIR@".encode(FORMAT))
-    
-    # receiving response 
     response = s.recv(SIZE).decode(FORMAT)
     status, folders = response.split("@",1)
 
     if status == "OK":
+        # dialog asks for the directory the user wants to change to
         folder_name = simpledialog.askstring("Change Directory","Enter Directory Name ('..' For Parent Directory)")
+        
         if folder_name and folder_name in folders:
+            # changes to new folder if it is in the list returned by the server
             current_directory = os.path.join(current_directory, folder_name)
             print(current_directory)
 
         elif folder_name == ".." and current_directory:
+            # changes to parent directory if there is one
             current_directory = os.path.dirname(current_directory)
             print(current_directory)
             
         else:
+            # does not change directory if it does not exist
             messagebox.showerror("Error","Error: Directory does not exist.")
 
     else:
+        # prints error if OK status is not received
         messagebox.showerror(status,": ",folders)
             
 
