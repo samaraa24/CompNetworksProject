@@ -2,6 +2,7 @@ import os
 import socket
 import threading
 import time
+import shutil
 import network_analysis
 
 IP = "localhost"
@@ -16,12 +17,15 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     conn.send("OK@Welcome to the file sharing server".encode(FORMAT))
     current_directory = SERVER_PATH
+
+    # while the server is handling the client(s)
     while True:
         try:
             data = conn.recv(SIZE).decode(FORMAT)
             cmd, *args = data.split("@")
             send_data = "OK@"
 
+            # logout command
             if cmd == "LOGOUT":
                 break
             
@@ -44,6 +48,7 @@ def handle_client(conn, addr):
                     network_analysis.update_database("Upload", os.path.basename(filename), filesize, start_time, end_time)
                     conn.send(f"OK@Upload of {filename} complete.".encode(FORMAT))
 
+            # download the file specified by the user's input
             elif cmd == "DOWNLOAD":
                 filename = args[0]
                 filepath = os.path.join(current_directory, filename)
@@ -72,30 +77,51 @@ def handle_client(conn, addr):
             # checks for directories in server files
             elif cmd == "DIR":
                 directories = ""
+                files = ""
+                current_directory = os.path.join(SERVER_PATH,args[0])
                 for file in os.listdir(current_directory):
                     possibleDirectory = os.path.join(current_directory, file)
                     if os.path.isdir(possibleDirectory):
+                        directories += "DIRECTORY "
                         directories += file
-                        directories += " (Directory)\n"
+                        directories += "\n"
                     if not os.path.isdir(possibleDirectory):
-                        directories += file
-                        directories += " (File)\n"
+                        files += "FILE "
+                        files += file
+                        files += "\n"
                 if directories != "":
                     send_data += directories
-                else:
-                    send_data += "No directories"
+                if files != "":
+                    send_data += files
+                if(directories == "") and (files == ""):
+                    send_data += "No files or directories."
                 conn.send(send_data.encode(FORMAT))
+                
 
             # creates directories/subdirectories
             elif cmd == "CREATEDIR":
-                current_directory = args[0]
+                current_directory = os.path.join(SERVER_PATH,args[0])
                 filename = args[1]
                 filepath = os.path.join(current_directory, filename)
                 print(filepath)
                 if not os.path.exists(filepath):
                     os.mkdir(filepath)
+                    conn.send(f"OK@{filepath}".encode(FORMAT))
                 else:
-                    conn.send(f"ERROR@File {filename} already exists or incorrect format.".encode(FORMAT))
+                    conn.send(f"ERROR@File {filepath} already exists or incorrect format.".encode(FORMAT))
+            
+            # deletes directories/subdirectories
+            elif cmd == "DELETEDIR":
+                current_directory = os.path.join(SERVER_PATH,args[0])
+                filename = args[1]
+                filepath = os.path.join(current_directory, filename)
+                print(filepath)
+                if os.path.exists(filepath):
+                    shutil.rmtree(filepath)
+                    conn.send(f"OK@{filepath}".encode(FORMAT))
+                else:
+                    conn.send(f"ERROR@File {filepath} does not exist".encode(FORMAT))
+
         # throws an exception
         except Exception as e:
             conn.send(f"ERROR@{str(e)}".encode(FORMAT))
@@ -107,27 +133,18 @@ def handle_client(conn, addr):
 
 
 def main():
+    # if there is no server directory make one
     if not os.path.exists(SERVER_PATH):
         os.makedirs(SERVER_PATH)
-    
-    # create text2 file in server files
-    filename = "text2.txt"
-    with open(os.path.join(SERVER_PATH, filename), "w") as file:
-        file.write("This is a test file for the server.")
-        file.close()
-    #create files file in server files
-    filename = "files.txt"
-    with open(os.path.join(SERVER_PATH, filename), "w") as file:
-        file.write("This is files.txt for the server.")
-        file.close()
 
-
+    # starts the server
     print("Starting the server")
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR)
     server.listen()
     print(f"Server is listening on {IP}: {PORT}")
 
+    # handles multithreading
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))

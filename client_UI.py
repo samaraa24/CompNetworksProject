@@ -116,7 +116,7 @@ def view_all_files():
     file_window = Toplevel(root)
     
     # sending command to server 
-    s.send("DIR@".encode(FORMAT))
+    s.send(f"DIR@{current_directory}".encode(FORMAT))
 
     # receiving response 
     response = s.recv(SIZE).decode(FORMAT)
@@ -155,13 +155,14 @@ def view_all_files():
 
 
 def delete_files():
-    file_window = Toplevel(root)
 
     filename = simpledialog.askstring("Delete Files", "Enter File Name")
+
+    file_path = os.path.join(current_directory, os.path.basename(filename))
    
     if filename:
         # sending delete command to server
-        s.send(f"DELETE@{filename}".encode(FORMAT))
+        s.send(f"DELETE@{file_path}".encode(FORMAT))
 
         # receive server's response 
         response = s.recv(SIZE).decode(FORMAT)
@@ -177,7 +178,6 @@ def delete_files():
 
 
 def create_directory():
-    file_window = Toplevel(root)
 
     dirname = simpledialog.askstring("Create Directories", "Enter Directory Name")
 
@@ -197,6 +197,25 @@ def create_directory():
     else: 
         print("Directory already exists")
 
+def delete_directory():
+
+    dirname = simpledialog.askstring("Delete Directory", "Enter Directory Name")
+
+    if dirname:
+        #send create directory command to server
+        s.send(f"DELETEDIR@{current_directory}@{dirname}".encode(FORMAT))
+
+        # receive server's response
+        response = s.recv(SIZE).decode(FORMAT)
+        status, message = response.split("@", 1)
+
+        #server response 
+        if status == "OK":
+            messagebox.showinfo(f"{dirname} was successfully deleted", message)
+        else:
+            messagebox.showerror("Error", message)
+    else: 
+        print("Directory does not exist.")
 
 def change_dir():
     global current_directory
@@ -222,7 +241,7 @@ def change_dir():
             
         else:
             # does not change directory if it does not exist
-            messagebox.showerror("Error","Error: Directory does not exist.")
+            messagebox.showerror("Error: Directory does not exist.")
 
     else:
         # prints error if OK status is not received
@@ -273,17 +292,23 @@ def connect_server():
     createDirectory.pack()
     createDirectory.place(x = 210, y = 150)
 
+    # create directory button
+    deleteDirectory = Button(root, text = "Delete a Directory", fg = "blue", bg = "white", command = delete_directory)
+    deleteDirectory.pack()
+    deleteDirectory.place(x = 220, y = 180)
+
     # change directory button
-    delete = Button(root, text = "Change Directory", fg = "blue", bg = "white", command = change_dir)
-    delete.pack()
-    delete.place(x = 220, y = 180)
+    changeDir = Button(root, text = "Change Directory", fg = "blue", bg = "white", command = change_dir)
+    changeDir.pack()
+    changeDir.place(x = 220, y = 210)
     
     listbox.insert(1, upload)
     listbox.insert(2, download)
     listbox.insert(3, view_files)
     listbox.insert(4, delete)
     listbox.insert(5, createDirectory)
-    listbox.insert(6, change_dir)
+    listbox.insert(6, deleteDirectory)
+    listbox.insert(7, changeDir)
 
 
 # connect server IP port -> initiate connection from client to server with specified files 
