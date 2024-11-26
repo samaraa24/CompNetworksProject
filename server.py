@@ -76,7 +76,10 @@ def handle_client(conn, addr):
                     possibleDirectory = os.path.join(current_directory, file)
                     if os.path.isdir(possibleDirectory):
                         directories += file
-                        directories += "\n"
+                        directories += " (Directory)\n"
+                    if not os.path.isdir(possibleDirectory):
+                        directories += file
+                        directories += " (File)\n"
                 if directories != "":
                     send_data += directories
                 else:

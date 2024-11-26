@@ -181,7 +181,7 @@ def create_directory():
 
     dirname = simpledialog.askstring("Create Directories", "Enter Directory Name")
 
-    if filename:
+    if dirname:
         #send create directory command to server
         s.send(f"CREATEDIR@{current_directory}@{dirname}".encode(FORMAT))
 
