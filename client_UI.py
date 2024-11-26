@@ -57,6 +57,10 @@ def upload_file():
         if not filename:
             return
 
+        # checks for file extension chosen to connect it to it's file size
+        file_extension = os.path.splitext(filename)[1]
+        file_size = os.path.getsize(filename)    
+
     f = open(filename, 'rb')
     print('Selected:', filename)
 
