@@ -33,7 +33,7 @@ def handle_client(conn, addr):
             elif cmd == "UPLOAD":
                 filename, filesize = args
                 filesize = int(filesize)
-                filepath = os.path.join(current_directory, filename)
+                filepath = os.path.join(SERVER_PATH, filename)
                 if os.path.exists(filepath):
                     conn.send(f"ERROR@File {filename} already exists.".encode(FORMAT))
                 else:
@@ -51,7 +51,7 @@ def handle_client(conn, addr):
             # download the file specified by the user's input
             elif cmd == "DOWNLOAD":
                 filename = args[0]
-                filepath = os.path.join(current_directory, filename)
+                filepath = os.path.join(SERVER_PATH, filename)
                 if os.path.exists(filepath):
                     start_time = int(round(time.time() * 1000000000))
                     filesize = os.path.getsize(filepath)
@@ -67,7 +67,7 @@ def handle_client(conn, addr):
             # deletes the file input by the user
             elif cmd == "DELETE":
                 filename = args[0]
-                filepath = os.path.join(current_directory, filename)
+                filepath = os.path.join(SERVER_PATH, filename)
                 if os.path.exists(filepath):
                     os.remove(filepath)
                     conn.send(f"OK@File {filename} deleted.".encode(FORMAT))
