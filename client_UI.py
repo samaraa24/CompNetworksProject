@@ -83,6 +83,9 @@ def download_file():
     # allows user to type the name of the file they are trying to download
     filename = simpledialog.askstring("Download File","Enter File Name")
 
+    if not filename:
+        return
+
     # appends the file path to include the current directory and sends to server
     file_path = os.path.join(current_directory, filename)
     s.send(f"DOWNLOAD@{file_path}".encode(FORMAT))
@@ -221,15 +224,20 @@ def change_dir():
     global current_directory
 
     # sends command and receives response
-    s.send("DIR@".encode(FORMAT))
+    s.send(f"DIR@{current_directory}".encode(FORMAT))
     response = s.recv(SIZE).decode(FORMAT)
     status, folders = response.split("@",1)
 
     if status == "OK":
         # dialog asks for the directory the user wants to change to
         folder_name = simpledialog.askstring("Change Directory","Enter Directory Name ('..' For Parent Directory)")
+
+        if folder_name:
+            folder = "DIRECTORY " + folder_name
+        else:
+            return
         
-        if folder_name and folder_name in folders:
+        if folder in folders:
             # changes to new folder if it is in the list returned by the server
             current_directory = os.path.join(current_directory, folder_name)
             print(current_directory)
@@ -241,7 +249,7 @@ def change_dir():
             
         else:
             # does not change directory if it does not exist
-            messagebox.showerror("Error: Directory does not exist.")
+            messagebox.showerror("Error", "Error: Directory does not exist.")
 
     else:
         # prints error if OK status is not received
